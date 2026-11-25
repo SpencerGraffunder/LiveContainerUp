@@ -257,6 +257,13 @@ def update_json_file_release_ss_lc(repo_url, json_file, latest_release, is_night
         info_plist = plistlib.load(infile)
     full_version = os.environ.get("LC_FORCED_VERSION", "").strip() or info_plist["CFBundleVersion"]
 
+    # Fork display naming (idempotent, overrides the released seed)
+    data["name"] = "LiveContainerUp"
+    data["subtitle"] = "SpencerGraffunder fork source"
+    app["name"] = "LiveContainerUp"
+    app["subtitle"] = "Fork of LiveContainer with GitHub repo updates"
+    app["developerName"] = "SpencerGraffunder"
+
     tag = latest_release["tag_name"]
     version = re.search(r"(\d+\.\d+\.\d+)", full_version).group(1)
     version_date = latest_release["published_at"]
