@@ -147,3 +147,26 @@ jobs:
             .github/apps_ss_lc.json
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Recover nightly release if publishing was interrupted
+        if: failure()
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # andelf/nightly-release deletes the old nightly before recreating it; a
+          # transient GitHub error in between leaves the tag with no release, which
+          # breaks SideStore updates. Recreate it from the already-downloaded files.
+          for attempt in 1 2 3; do
+            if gh release view nightly --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+              echo "nightly release present; nothing to recover"
+              exit 0
+            fi
+            echo "attempt $attempt: recreating nightly release"
+            if gh release create nightly --repo "$GITHUB_REPOSITORY" \
+                 --title "Nightly Release @ $(date -u +%Y%m%d)" --prerelease --target "$GITHUB_SHA" \
+                 "${{ needs.build.outputs.artifact }}" "${{ needs.build.outputs.artifact2 }}" .github/apps_nightly.json; then
+              echo "nightly release recovered"
+              exit 0
+            fi
+            sleep 30
+          done
+          echo "::warning::could not recover the nightly release; publish a new nightly manually"
