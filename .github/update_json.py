@@ -3,6 +3,7 @@ import plistlib
 import re
 import requests
 import os
+import time
 from datetime import datetime
 
 def prepare_description(text):
@@ -19,18 +20,33 @@ def fetch_latest_release(repo_url, is_nightly: bool):
     headers = {
         "Accept": "application/vnd.github+json",
     }
-    try:
-        response = requests.get(api_url, headers=headers)
-        response.raise_for_status()
-        releases = response.json()
-        latest_release = next((
-            release for release in releases
-            if (release["tag_name"] == "nightly") == is_nightly
-        ), None)
-        return [latest_release] if latest_release else []
-    except requests.RequestException as e:
-        print(f"Error fetching releases: {e}")
-        raise
+    # Runners share egress IPs, so the unauthenticated API limit is burned by
+    # strangers; send the workflow token when present and retry transient errors.
+    token = os.environ.get("GITHUB_TOKEN") or os.environ.get("GH_TOKEN")
+    if token:
+        headers["Authorization"] = "Bearer " + token.strip()
+    last_error = None
+    for attempt in range(1, 4):
+        try:
+            response = requests.get(api_url, headers=headers)
+            if response.status_code in (403, 429, 500, 502, 503, 504) and attempt < 3:
+                print(f"fetch releases: HTTP {response.status_code}, retry {attempt}/3")
+                time.sleep(20 * attempt)
+                continue
+            response.raise_for_status()
+            releases = response.json()
+            latest_release = next((
+                release for release in releases
+                if (release["tag_name"] == "nightly") == is_nightly
+            ), None)
+            return [latest_release] if latest_release else []
+        except requests.RequestException as e:
+            last_error = e
+            if attempt < 3:
+                print(f"fetch releases: {e}, retry {attempt}/3")
+                time.sleep(20 * attempt)
+    print(f"Error fetching releases: {last_error}")
+    raise last_error
 
 def get_file_size(url):
     try:
