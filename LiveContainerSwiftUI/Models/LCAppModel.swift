@@ -130,6 +130,12 @@ class LCAppModel: ObservableObject, Hashable {
         }
     }
     
+    @Published var uiGithubRepo : String {
+        didSet {
+            appInfo.githubRepo = uiGithubRepo
+        }
+    }
+    
     @Published var uiIsMultitaskModeSpecificed : MultitaskSpecified {
         didSet {
             appInfo.multitaskSpecified = uiIsMultitaskModeSpecificed;
@@ -203,6 +209,7 @@ class LCAppModel: ObservableObject, Hashable {
         self.uiSelected32BitEmulator = appInfo.selected32BitEmulator ?? ""
         self.uiSpoofSDKVersion = appInfo.spoofSDKVersion
         self.uiRemark = appInfo.remark ?? ""
+        self.uiGithubRepo = appInfo.githubRepo ?? ""
         self.uiIs32bit = appInfo.is32bit
         self.uiIs32bitEmulator = appInfo.is32bitEmulator
         for container in uiContainers {
@@ -582,6 +589,9 @@ class LCAppModel: ObservableObject, Hashable {
         toAppInfo.classicMode = fromApp.appInfo.classicMode
         
         toAppInfo.lastLaunched = fromApp.appInfo.lastLaunched
+        
+        toAppInfo.githubRepo = fromApp.appInfo.githubRepo
+        toAppInfo.githubTag = fromApp.appInfo.githubTag
         
         toAppInfo.autoSaveDisabled = false
         toAppInfo.save()

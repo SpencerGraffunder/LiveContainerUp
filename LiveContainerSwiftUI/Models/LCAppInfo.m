@@ -865,4 +865,30 @@
     [self save];
 }
 
+- (NSString*)githubRepo {
+    return _info[@"githubRepo"];
+}
+
+- (void)setGithubRepo:(NSString *)githubRepo {
+    if([githubRepo isEqualToString: @""]) {
+        _info[@"githubRepo"] = nil;
+    } else {
+        _info[@"githubRepo"] = githubRepo;
+    }
+    [self save];
+}
+
+- (NSString*)githubTag {
+    return _info[@"githubTag"];
+}
+
+- (void)setGithubTag:(NSString *)githubTag {
+    if([githubTag isEqualToString: @""]) {
+        _info[@"githubTag"] = nil;
+    } else {
+        _info[@"githubTag"] = githubTag;
+    }
+    [self save];
+}
+
 @end

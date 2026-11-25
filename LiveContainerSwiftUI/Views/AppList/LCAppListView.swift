@@ -57,6 +57,10 @@ struct LCAppListView : View, LCAppBannerDelegate, LCAppModelDelegate {
     
     @EnvironmentObject var downloadHelper: DownloadHelper
     @StateObject private var installUrlInput = InputHelper()
+    @StateObject private var installRepoInput = InputHelper()
+    @State private var updateInfoShow = false
+    @State private var updateInfoText = ""
+    @State private var updatingAll = false
     
     @State private var jitLog = ""
     @StateObject private var jitAlert = YesNoHelper()
@@ -224,6 +228,9 @@ struct LCAppListView : View, LCAppBannerDelegate, LCAppModelDelegate {
                                 Button("lc.appList.installFromUrl".loc, systemImage: "link.badge.plus", action: {
                                     Task{ await startInstallFromUrl() }
                                 })
+                                Button("lc.appList.installFromRepo".loc, systemImage: "arrow.triangle.branch", action: {
+                                    Task{ await startInstallFromRepo() }
+                                })
                             } label: {
                                 Label("add", systemImage: "plus")
                             }
@@ -249,6 +256,15 @@ struct LCAppListView : View, LCAppBannerDelegate, LCAppModelDelegate {
                     }
                     
 
+                }
+                
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        Task { await updateAllApps() }
+                    } label: {
+                        Label("lc.appList.updateAll".loc, systemImage: "arrow.triangle.2.circlepath")
+                    }
+                    .disabled(updatingAll || installprogressVisible)
                 }
                 
                 ToolbarItem(placement: .topBarTrailing) {
@@ -373,6 +389,25 @@ struct LCAppListView : View, LCAppBannerDelegate, LCAppModelDelegate {
                 installUrlInput.close(result: nil)
             }
         )
+        .textFieldAlert(
+            isPresented: $installRepoInput.show,
+            title:  "lc.appList.installRepoInputTip".loc,
+            text: $installRepoInput.initVal,
+            placeholder: "owner/repo",
+            action: { newText in
+                installRepoInput.close(result: newText)
+            },
+            actionCancel: {_ in
+                installRepoInput.close(result: nil)
+            }
+        )
+        .alert("lc.appList.updateAll".loc, isPresented: $updateInfoShow) {
+            Button("lc.common.ok".loc, action: {
+                updateInfoShow = false
+            })
+        } message: {
+            Text(updateInfoText)
+        }
         .sheet(isPresented: $jitAlert.show, onDismiss: {
             jitAlert.close(result: false)
         }) {
@@ -587,7 +622,7 @@ struct LCAppListView : View, LCAppBannerDelegate, LCAppModelDelegate {
         extract(path, destination, progress)
     }
     
-    func installIpaFile(_ url:URL) async throws {
+    func installIpaFile(_ url:URL, replaceApp: LCAppModel? = nil, githubMeta: (repo: String, tag: String)? = nil) async throws {
         let fm = FileManager()
         
         let installProgress = Progress.discreteProgress(totalUnitCount: 100)
@@ -630,6 +665,14 @@ struct LCAppListView : View, LCAppBannerDelegate, LCAppModelDelegate {
         var appRelativePath = "\(newAppInfo.bundleIdentifier()!.sanitizeNonACSII()).app"
         var outputFolder = LCPath.bundlePath.appendingPathComponent(appRelativePath)
         var appToReplace : LCAppModel? = nil
+        if let replaceApp {
+            // Silent replacement of a specific installation (GitHub update flow):
+            // replace exactly this app, no replace-target alert
+            appToReplace = replaceApp
+            appRelativePath = replaceApp.appInfo.relativeBundlePath
+            outputFolder = (replaceApp.uiIsShared ? LCPath.lcGroupBundlePath : LCPath.bundlePath).appendingPathComponent(appRelativePath)
+            try fm.removeItem(at: outputFolder)
+        } else {
         // Folder exist! show alert for user to choose which bundle to replace
         var sameBundleIdApp = sharedModel.apps.filter { app in
             return app.appInfo.bundleIdentifier()! == newAppInfo.bundleIdentifier()
@@ -683,6 +726,7 @@ struct LCAppListView : View, LCAppBannerDelegate, LCAppModelDelegate {
                 try fm.removeItem(at: outputFolder)
             }
         }
+        }
         // Move it!
         try fm.moveItem(at: appFolderPath, to: outputFolder)
         let finalNewApp = LCAppInfo(bundlePath: outputFolder.path)
@@ -725,6 +769,10 @@ struct LCAppListView : View, LCAppBannerDelegate, LCAppModelDelegate {
         } else {
             // enable SDK version spoof by defalut
             finalNewApp.spoofSDKVersion = true
+        }
+        if let githubMeta {
+            finalNewApp.githubRepo = githubMeta.repo
+            finalNewApp.githubTag = githubMeta.tag
         }
         finalNewApp.installationDate = Date.now
         
@@ -943,6 +991,217 @@ struct LCAppListView : View, LCAppBannerDelegate, LCAppModelDelegate {
             errorShow = true
         }
         
+    }
+    
+    // MARK: - GitHub repository install / update
+    
+    func githubLinkedApps() -> [LCAppModel] {
+        var apps = sharedModel.apps.filter { ($0.appInfo.githubRepo ?? "") != "" }
+        if sharedModel.isHiddenAppUnlocked || !LCUtils.appGroupUserDefault.bool(forKey: "LCStrictHiding") {
+            apps += sharedModel.hiddenApps.filter { ($0.appInfo.githubRepo ?? "") != "" }
+        }
+        return apps
+    }
+    
+    func startInstallFromRepo() async {
+        guard let repoInput = await installRepoInput.open(), repoInput.count > 0 else {
+            return
+        }
+        await installFromGithubRepo(repoInput: repoInput, replaceApp: nil)
+    }
+    
+    func installFromGithubRepo(repoInput: String, replaceApp: LCAppModel?) async {
+        // ignore any install request if we are installing another app
+        if self.installprogressVisible {
+            return
+        }
+        
+        if sharedModel.multiLCStatus == 2 {
+            errorInfo = "lc.appList.manageInPrimaryTip".loc
+            errorShow = true
+            return
+        }
+        
+        guard let repo = parseGithubRepoString(repoInput) else {
+            errorInfo = "lc.appList.repoInvalidError".loc
+            errorShow = true
+            return
+        }
+        
+        self.installprogressVisible = true
+        defer {
+            self.installprogressVisible = false
+        }
+        
+        do {
+            let release = try await GithubApi.latestRelease(repo: repo)
+            guard let ipaAsset = release.ipaAsset, let downloadUrl = URL(string: ipaAsset.browser_download_url) else {
+                throw "lc.appList.noIpaInReleaseError %@".localizeWithFormat(repo)
+            }
+            let fileManager = FileManager.default
+            let destinationURL = fileManager.temporaryDirectory.appendingPathComponent(downloadUrl.lastPathComponent)
+            if fileManager.fileExists(atPath: destinationURL.path) {
+                try fileManager.removeItem(at: destinationURL)
+            }
+            try await downloadHelper.download(url: downloadUrl, to: destinationURL)
+            if downloadHelper.cancelled {
+                return
+            }
+            try await installIpaFile(destinationURL, replaceApp: replaceApp, githubMeta: (repo, release.tag_name))
+            try fileManager.removeItem(at: destinationURL)
+        } catch {
+            errorInfo = error.localizedDescription
+            errorShow = true
+        }
+    }
+    
+    /// Banner long-press "Update from GitHub": updates one app in place from its
+    /// linked repository. If the app is not linked yet, asks for a repository first.
+    func updateAppFromGithub(model: LCAppModel) async {
+        if self.installprogressVisible {
+            return
+        }
+        
+        if sharedModel.multiLCStatus == 2 {
+            errorInfo = "lc.appList.manageInPrimaryTip".loc
+            errorShow = true
+            return
+        }
+        
+        if model.appInfo.isLocked && !sharedModel.isHiddenAppUnlocked {
+            do {
+                if !(try await LCUtils.authenticateUser()) {
+                    return
+                }
+            } catch {
+                errorInfo = error.localizedDescription
+                errorShow = true
+                return
+            }
+        }
+        
+        var repoStr = model.appInfo.githubRepo ?? ""
+        if repoStr.isEmpty {
+            // not linked yet: link it now or abort
+            guard let input = await installRepoInput.open(initVal: ""), input.count > 0 else {
+                return
+            }
+            guard let parsed = parseGithubRepoString(input) else {
+                errorInfo = "lc.appList.repoInvalidError".loc
+                errorShow = true
+                return
+            }
+            repoStr = parsed
+            model.appInfo.githubRepo = repoStr
+        }
+        
+        self.installprogressVisible = true
+        defer {
+            self.installprogressVisible = false
+        }
+        
+        do {
+            let release = try await GithubApi.latestRelease(repo: repoStr)
+            let currentTag = model.appInfo.githubTag ?? ""
+            if !currentTag.isEmpty && currentTag == release.tag_name {
+                updateInfoText = "lc.appList.upToDateMsg %@ %@".localizeWithFormat(model.displayName, release.tag_name)
+                updateInfoShow = true
+                return
+            }
+            guard let ipaAsset = release.ipaAsset, let downloadUrl = URL(string: ipaAsset.browser_download_url) else {
+                throw "lc.appList.noIpaInReleaseError %@".localizeWithFormat(repoStr)
+            }
+            let fileManager = FileManager.default
+            let destinationURL = fileManager.temporaryDirectory.appendingPathComponent(downloadUrl.lastPathComponent)
+            if fileManager.fileExists(atPath: destinationURL.path) {
+                try fileManager.removeItem(at: destinationURL)
+            }
+            try await downloadHelper.download(url: downloadUrl, to: destinationURL)
+            if downloadHelper.cancelled {
+                return
+            }
+            try await installIpaFile(destinationURL, replaceApp: model, githubMeta: (repoStr, release.tag_name))
+            try fileManager.removeItem(at: destinationURL)
+        } catch {
+            errorInfo = error.localizedDescription
+            errorShow = true
+        }
+    }
+    
+    func updateAllApps() async {
+        if updatingAll || self.installprogressVisible {
+            return
+        }
+        
+        if sharedModel.multiLCStatus == 2 {
+            errorInfo = "lc.appList.manageInPrimaryTip".loc
+            errorShow = true
+            return
+        }
+        
+        let linkedApps = githubLinkedApps()
+        if linkedApps.isEmpty {
+            updateInfoText = "lc.appList.updateAllNoReposMsg".loc
+            updateInfoShow = true
+            return
+        }
+        
+        updatingAll = true
+        defer {
+            updatingAll = false
+        }
+        
+        var updated = 0
+        var upToDate = 0
+        var failedMessages: [String] = []
+        
+        for app in linkedApps {
+            if app.appInfo.isLocked && !sharedModel.isHiddenAppUnlocked {
+                failedMessages.append("\(app.displayName): " + "lc.appList.appLockedSkipError".loc)
+                continue
+            }
+            guard let repoStr = app.appInfo.githubRepo, repoStr != "" else {
+                continue
+            }
+            do {
+                self.installprogressVisible = true
+                let release = try await GithubApi.latestRelease(repo: repoStr)
+                let currentTag = app.appInfo.githubTag ?? ""
+                if !currentTag.isEmpty && currentTag == release.tag_name {
+                    upToDate += 1
+                    continue
+                }
+                guard let ipaAsset = release.ipaAsset, let downloadUrl = URL(string: ipaAsset.browser_download_url) else {
+                    throw "lc.appList.noIpaInReleaseError %@".localizeWithFormat(repoStr)
+                }
+                let fileManager = FileManager.default
+                let destinationURL = fileManager.temporaryDirectory.appendingPathComponent(downloadUrl.lastPathComponent)
+                if fileManager.fileExists(atPath: destinationURL.path) {
+                    try fileManager.removeItem(at: destinationURL)
+                }
+                try await downloadHelper.download(url: downloadUrl, to: destinationURL)
+                if downloadHelper.cancelled {
+                    break
+                }
+                try await installIpaFile(destinationURL, replaceApp: app, githubMeta: (repoStr, release.tag_name))
+                try fileManager.removeItem(at: destinationURL)
+                updated += 1
+            } catch {
+                failedMessages.append("\(app.displayName): \(error.localizedDescription)")
+            }
+        }
+        self.installprogressVisible = false
+        
+        if failedMessages.isEmpty && updated == 0 {
+            updateInfoText = "lc.appList.updateAllAllUpToDateMsg".loc
+            updateInfoShow = true
+        } else {
+            updateInfoText = "lc.appList.updateAllResultMsg %lld %lld %lld".localizeWithFormat(updated, upToDate, failedMessages.count)
+            if !failedMessages.isEmpty {
+                updateInfoText += "\n" + failedMessages.joined(separator: "\n")
+            }
+            updateInfoShow = true
+        }
     }
     
     func removeApp(app: LCAppModel) {

@@ -50,6 +50,9 @@ typedef NS_ENUM(NSInteger, MultitaskSpecified){
 @property NSDate* lastLaunched;
 @property NSDate* installationDate;
 @property NSString* remark;
+// GitHub repository updates: "owner/repo" and the release tag last installed
+@property NSString* githubRepo;
+@property NSString* githubTag;
 @property bool is32bit;
 @property(readonly) bool is32bitEmulator;
 @property UIColor* cachedColor;

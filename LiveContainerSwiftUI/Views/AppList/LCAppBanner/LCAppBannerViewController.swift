@@ -174,6 +174,16 @@ final class LCAppBannerViewController: UIViewController, UIContextMenuInteractio
             })
         }
 
+        // Update from GitHub
+        sectionChildren.append(UIAction(
+            title: "lc.appBanner.updateFromGithub".loc,
+            image: UIImage(systemName: "arrow.triangle.2.circlepath")
+        ) { _ in
+            Task { [weak self] in
+                await self?.delegate.updateAppFromGithub(model: model)
+            }
+        })
+
         let addToHomeScreenMenu = UIMenu(
             title: "lc.appBanner.addToHomeScreen".loc,
             image: UIImage(systemName: "plus.app"),
