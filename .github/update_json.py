@@ -62,7 +62,7 @@ def update_json_file_release(repo_url, json_file, latest_release):
 
     with open("LiveContainer/Info.plist", 'rb') as infile:
         info_plist = plistlib.load(infile)
-    full_version = info_plist["CFBundleVersion"]
+    full_version = os.environ.get("LC_FORCED_VERSION", "").strip() or info_plist["CFBundleVersion"]
 
     tag = latest_release["tag_name"]
     version = re.search(r"(\d+\.\d+\.\d+)", full_version).group(1)
@@ -155,7 +155,7 @@ def update_json_file_nightly(json_file, nightly_release):
 
     with open("LiveContainer/Info.plist", 'rb') as infile:
         info_plist = plistlib.load(infile)
-    full_version = info_plist["CFBundleVersion"]
+    full_version = os.environ.get("LC_FORCED_VERSION", "").strip() or info_plist["CFBundleVersion"]
     tag = nightly_release["tag_name"]
     version = re.search(r"(\d+\.\d+\.\d+)", full_version).group(1)
     version_date = nightly_release["published_at"]
@@ -240,7 +240,7 @@ def update_json_file_release_ss_lc(repo_url, json_file, latest_release, is_night
 
     with open("LiveContainer/Info.plist", 'rb') as infile:
         info_plist = plistlib.load(infile)
-    full_version = info_plist["CFBundleVersion"]
+    full_version = os.environ.get("LC_FORCED_VERSION", "").strip() or info_plist["CFBundleVersion"]
 
     tag = latest_release["tag_name"]
     version = re.search(r"(\d+\.\d+\.\d+)", full_version).group(1)
