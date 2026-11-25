@@ -10,10 +10,10 @@
   "apps": [
     {
       "beta": false,
-      "name": "LiveContainer (nightly)",
+      "name": "LiveContainerUp",
       "bundleIdentifier": "com.kdt.livecontainer",
-      "developerName": "LiveContainer Team",
-      "subtitle": "Run iOS apps without actually installing them!",
+      "developerName": "SpencerGraffunder",
+      "subtitle": "Fork of LiveContainer with GitHub repo updates",
       "version": "3.4.50",
       "versionDate": "2025-04-26",
       "versionDescription": "This is a nightly release [created automatically with GitHub Actions workflow](https://github.com/LiveContainer/LiveContainer/actions/runs/14679205373/attempts/1).",

@@ -1,14 +1,9 @@
-name: Xcode - Build
+name: Build LiveContainerUp
 
-on: 
+on:
   push:
-  pull_request:
+    branches: [main]
   workflow_dispatch:
-    inputs: 
-      release__nightly:
-        description: Create a nightly release
-        type: boolean
-        required: false
 
 jobs:
   build:
@@ -102,7 +97,7 @@ jobs:
     name: Nightly Release
     permissions:
       contents: write
-    if: inputs.release__nightly || github.event_name == 'push' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+
     runs-on: ubuntu-latest
     needs: [build]
     concurrency:
@@ -142,11 +137,12 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with: 
+          name: LiveContainerUp build ${{ github.run_number }}
           body: |
             **Commit:** [${{ github.sha }}](https://github.com/${{ github.repository }}/commit/${{ github.sha }})
             **Message:** ${{ github.event.head_commit.message }}
             
-            This is a nightly release [created automatically with GitHub Actions workflow](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}/attempts/${{ github.run_attempt }}).
+            This build is published automatically on push to main ([workflow run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}/attempts/${{ github.run_attempt }})).
           files: |
             ${{ needs.build.outputs.artifact }}
             ${{ needs.build.outputs.artifact2 }}
@@ -174,7 +170,7 @@ jobs:
             fi
             echo "attempt $attempt: recreating nightly release"
             if gh release create nightly --repo "$GITHUB_REPOSITORY" \
-                 --title "Nightly Release @ $(date -u +%Y%m%d)" --prerelease --target "$GITHUB_SHA" \
+                 --title "LiveContainerUp build (recovered)" --prerelease --target "$GITHUB_SHA" \
                  "${{ needs.build.outputs.artifact }}" "${{ needs.build.outputs.artifact2 }}" .github/apps_nightly.json; then
               echo "nightly release recovered"
               exit 0

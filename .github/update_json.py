@@ -156,6 +156,14 @@ def update_json_file_nightly(json_file, nightly_release):
     with open("LiveContainer/Info.plist", 'rb') as infile:
         info_plist = plistlib.load(infile)
     full_version = os.environ.get("LC_FORCED_VERSION", "").strip() or info_plist["CFBundleVersion"]
+
+    # Fork display naming (idempotent, independent of the seed JSON)
+    data["name"] = "LiveContainerUp"
+    data["subtitle"] = "SpencerGraffunder fork source"
+    app["name"] = "LiveContainerUp"
+    app["subtitle"] = "Fork of LiveContainer with GitHub repo updates"
+    app["developerName"] = "SpencerGraffunder"
+
     tag = nightly_release["tag_name"]
     version = re.search(r"(\d+\.\d+\.\d+)", full_version).group(1)
     version_date = nightly_release["published_at"]
@@ -166,10 +174,10 @@ def update_json_file_nightly(json_file, nightly_release):
     commit_msg = os.environ.get("commit_msg", "").strip()
 
     description = f"""\
-Nightly build from [{commit_sha}](https://github.com/LiveContainer/LiveContainer/commit/{commit_sha}):\
+LiveContainerUp build from [{commit_sha}](https://github.com/SpencerGraffunder/LiveContainerUp/commit/{commit_sha}):\
  {commit_msg}
 
-This is a nightly release [created automatically with GitHub Actions workflow]({nightly_link}).
+Published automatically on push to main [workflow run]({nightly_link}).
 """
     description = prepare_description(description)
 

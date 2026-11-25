@@ -33,7 +33,7 @@ matching the existing install behavior.
 - Version is pinned at **3.8.99** (above upstream nightlies) so SideStore/AltStore treat
   fork builds as an upgrade. Keep it above upstream when merging.
 - The built-in SideStore's LiveContainer source hook (`SideStoreSupport/SideStoreHooks.m`)
-  points at `https://github.com/SpencerGraffunder/LiveContainer/releases/download/1.0/apps_ss_lc.json`,
+  points at `https://github.com/SpencerGraffunder/LiveContainerUp/releases/download/1.0/apps_ss_lc.json`,
   so a fork build refreshes itself from **this fork's** nightly releases.
 - `.github/update_json.py` derives the repo from `GITHUB_REPOSITORY`, so the AltStore
   source files always reference this fork's own release assets.
