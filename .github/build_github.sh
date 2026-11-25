@@ -1,7 +1,7 @@
 # copy lc
-wget https://github.com/LiveContainer/dylibify/releases/download/1.0/dylibify
+curl -L -o dylibify https://github.com/LiveContainer/dylibify/releases/download/1.0/dylibify
 chmod +x dylibify
-brew install ldid
+command -v ldid >/dev/null 2>&1 || brew install ldid
 
 # move lc to working folder
 mv "$archive_path.xcarchive/Products/Applications" Payload
@@ -41,7 +41,7 @@ mv ./tmp/SideStoreSupport.framework Payload/LiveContainer.app/Frameworks
 
 # download SideStore
 cd tmp
-wget https://github.com/LiveContainer/SideStore/releases/download/nightly/SideStore.ipa
+curl -L -o SideStore.ipa https://github.com/LiveContainer/SideStore/releases/download/nightly/SideStore.ipa
 unzip SideStore.ipa
 cd ..
 
@@ -67,7 +67,7 @@ mv ./Payload/LiveContainer.app/Frameworks/SideStoreApp.framework/PlugIns/AltWidg
 mv ./Payload/LiveContainer.app/PlugIns/LiveWidgetExtension.appex/AltWidgetExtension ./Payload/LiveContainer.app/PlugIns/LiveWidgetExtension.appex/LiveWidgetExtension
 
 # Sign
-rm -r .zsign_cache
+rm -rf .zsign_cache
 find payloadlc/Payload -type d -name "_CodeSignature" -exec rm -r {} +
 
 ldid -S.github/sidelc/LiveWidgetExtension_adhoc.xml ./Payload/LiveContainer.app/PlugIns/LiveWidgetExtension.appex/LiveWidgetExtension

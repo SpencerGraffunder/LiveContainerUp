@@ -1517,6 +1517,17 @@
         }
       }
     },
+    "lc.appBanner.updateFromGithub" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Update from GitHub"
+          }
+        }
+      }
+    },
     "lc.appBanner.waitForJitMsg" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2228,6 +2239,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "初始化AppInfo失敗！"
+          }
+        }
+      }
+    },
+    "lc.appList.appLockedSkipError" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skipped: app is locked (unlock it first)"
           }
         }
       }
@@ -2968,6 +2990,28 @@
         }
       }
     },
+    "lc.appList.githubApiError %lld" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "GitHub request failed with status %lld."
+          }
+        }
+      }
+    },
+    "lc.appList.githubRateLimitedError" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "GitHub API rate limit reached. Try again later or add a GitHub token in Settings."
+          }
+        }
+      }
+    },
     "lc.appList.hiddenApps" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -3574,6 +3618,17 @@
         }
       }
     },
+    "lc.appList.installFromRepo" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Install from GitHub Repo"
+          }
+        }
+      }
+    },
     "lc.appList.installFromUrl" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -3772,6 +3827,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "有一個具有相同捆綁識別符號的現有應用程式。 更換一個或安裝為新的。"
+          }
+        }
+      }
+    },
+    "lc.appList.installRepoInputTip" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enter a GitHub repository to install the .ipa from its latest release"
           }
         }
       }
@@ -4281,6 +4347,28 @@
         }
       }
     },
+    "lc.appList.noIpaInReleaseError %@" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No .ipa file found in the latest release of %@."
+          }
+        }
+      }
+    },
+    "lc.appList.noReleasesError %@" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ has no published releases on GitHub."
+          }
+        }
+      }
+    },
     "lc.appList.openLink" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -4627,6 +4715,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "無法解析plist檔案"
+          }
+        }
+      }
+    },
+    "lc.appList.repoInvalidError" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Invalid GitHub repository. Use \"owner/repo\" or a github.com URL."
+          }
+        }
+      }
+    },
+    "lc.appList.repoNotFoundError %@" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "GitHub repository %@ was not found. Is it private?"
           }
         }
       }
@@ -5496,6 +5606,61 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "名字 (Z-A)"
+          }
+        }
+      }
+    },
+    "lc.appList.upToDateMsg %@ %@" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ is already up to date with %@."
+          }
+        }
+      }
+    },
+    "lc.appList.updateAll" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Update All"
+          }
+        }
+      }
+    },
+    "lc.appList.updateAllAllUpToDateMsg" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "All linked apps are up to date."
+          }
+        }
+      }
+    },
+    "lc.appList.updateAllNoReposMsg" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No apps are linked to a GitHub repository. Link one in the app's settings (GitHub Repo row) or use Update from GitHub on an app."
+          }
+        }
+      }
+    },
+    "lc.appList.updateAllResultMsg %lld %lld %lld" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Updated %lld app(s).\n%lld already up to date.\n%lld failed."
           }
         }
       }
@@ -7425,6 +7590,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "偽裝 SDK 版本使系統庫以應用程式建置時的 SDK 版本運行。"
+          }
+        }
+      }
+    },
+    "lc.appSettings.githubRepo" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "GitHub Repo"
+          }
+        }
+      }
+    },
+    "lc.appSettings.githubRepoPlaceholder" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "owner/repo"
           }
         }
       }
@@ -21997,6 +22184,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "在App圖示外加上LiveContainer圖示邊框。"
+          }
+        }
+      }
+    },
+    "lc.settings.githubToken" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "GitHub access token (optional)"
+          }
+        }
+      }
+    },
+    "lc.settings.githubTokenDesc" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Optional. Raises the GitHub API rate limit for update checks from 60 to 5000 requests per hour. Stored only on this device."
           }
         }
       }

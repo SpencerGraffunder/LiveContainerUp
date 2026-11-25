@@ -63,6 +63,15 @@ struct LCAppSettingsView: View {
                         .foregroundColor(.gray)
                         .multilineTextAlignment(.trailing)
                 }
+                HStack {
+                    Text("lc.appSettings.githubRepo".loc)
+                    Spacer()
+                    TextField("lc.appSettings.githubRepoPlaceholder".loc, text: $model.uiGithubRepo)
+                        .foregroundColor(.gray)
+                        .multilineTextAlignment(.trailing)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled(true)
+                }
                 if !model.uiIsShared {
                     Menu {
                         Picker(selection: $model.uiTweakFolder , label: Text("")) {

@@ -50,6 +50,7 @@ struct LCSettingsView: View {
     @AppStorage("LCSwitchAppWithoutAsking") var silentSwitchApp = false
     @AppStorage("LCOpenWebPageWithoutAsking") var silentOpenWebPage = false
     @AppStorage("LCDontSignApp", store: LCUtils.appGroupUserDefault) var dontSignApp = false
+    @AppStorage("LCGitHubToken", store: LCUtils.appGroupUserDefault) var githubToken = ""
     @AppStorage("LCStrictHiding", store: LCUtils.appGroupUserDefault) var strictHiding = false
     @AppStorage("dynamicColors", store: LCUtils.appGroupUserDefault) var dynamicColors = true
     @AppStorage("darkModeIcon", store: LCUtils.appGroupUserDefault) var darkModeIcon = false
@@ -258,6 +259,20 @@ struct LCSettingsView: View {
                     }
                 } footer: {
                     Text("lc.settings.dontSignDesc".loc)
+                }
+
+                Section {
+                    HStack {
+                        Text("lc.settings.githubToken".loc)
+                        Spacer()
+                        SecureField("ghp_...", text: $githubToken)
+                            .foregroundColor(.gray)
+                            .multilineTextAlignment(.trailing)
+                            .textInputAutocapitalization(.never)
+                            .autocorrectionDisabled(true)
+                    }
+                } footer: {
+                    Text("lc.settings.githubTokenDesc".loc)
                 }
 
                 Section {
