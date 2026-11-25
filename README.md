@@ -1,7 +1,63 @@
 <div align="center">
    <img width="217" height="217" src="./screenshots/livecontainer_icon.png" alt="Logo">
 </div>
-   
+
+> **Personal fork of [LiveContainer/LiveContainer](https://github.com/LiveContainer/LiveContainer)**
+> that builds on the owner's MacBook via a self-hosted GitHub Actions runner and adds
+> **GitHub-repo-based app updates**. Upstream is merged in manually; AGPL-3.0 still applies.
+
+## What this fork adds
+
+- **Install from GitHub Repo** — the `+` menu on the Apps page gains a third option.
+  Enter `owner/repo` (or a github.com URL) and the latest GitHub Release `.ipa` is
+  downloaded and installed directly — no IPA host, no iCloud Drive.
+- **Per-app GitHub link** — every app gets a `GitHub Repo` row in its settings,
+  persisted in `LCAppInfo.plist` alongside the installed release tag. Already-installed
+  apps can be linked at any time.
+- **Update from GitHub** — long-press any app banner to update just that app in place.
+  If no repo is linked yet, you're asked for one first.
+- **Update All** — toolbar button on the Apps page: checks every linked app against its
+  repo's latest release and updates the stale ones sequentially.
+- **Optional GitHub token** (Settings → GitHub access token) raises the Releases API
+  rate limit for update checks from 60 to 5000 requests/hour. Stored on-device only.
+
+Updates replace the app bundle in place: containers, tweaks, hidden/shared/locked state
+and all per-app settings are carried over (same mechanism as a manual "replace" install).
+In secondary instances (LiveContainer2/3) these actions point you at primary LiveContainer,
+matching the existing install behavior.
+
+## Fork identity & update chain
+
+- Bundle id stays `com.kdt.livecontainer` — installing this fork over any existing
+  LiveContainer preserves all guest apps and data.
+- Version is pinned at **3.8.99** (above upstream nightlies) so SideStore/AltStore treat
+  fork builds as an upgrade. Keep it above upstream when merging.
+- The built-in SideStore's LiveContainer source hook (`SideStoreSupport/SideStoreHooks.m`)
+  points at `https://github.com/SpencerGraffunder/LiveContainer/releases/download/1.0/apps_ss_lc.json`,
+  so a fork build refreshes itself from **this fork's** nightly releases.
+- `.github/update_json.py` derives the repo from `GITHUB_REPOSITORY`, so the AltStore
+  source files always reference this fork's own release assets.
+
+## CI (builds run on the owner's MacBook)
+
+- `.github/workflows/build.yml` → `runs-on: [self-hosted, mac-livecontainer]`
+  (runner instance `~/actions-runner-livecontainer`, Xcode 27.2). Builds both
+  `LiveContainer.ipa` and `LiveContainer+SideStore.ipa`; pushes to the default branch
+  publish the `nightly` release and refresh `apps_ss_lc.json` on the `1.0` release.
+- `LiveContainer2`/`LiveContainer3` (multi-LC) still install from the running fork build
+  via Settings → Multi-LC, exactly like upstream.
+
+## Syncing with upstream
+
+```sh
+git remote add upstream https://github.com/LiveContainer/LiveContainer.git
+git fetch upstream && git merge upstream/main
+# resolve conflicts keeping fork bits: version 3.8.99, SideStoreHooks URL, update_json repo_url
+git push origin main
+```
+
+  
+
 
 <div align="center">
   <h1><b>LiveContainer</b></h1>
