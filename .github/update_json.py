@@ -273,7 +273,7 @@ def update_json_file_release_ss_lc(repo_url, json_file, latest_release, is_night
     commit_msg = os.environ.get("commit_msg", "").strip()
 
     description = f"""\
-Nightly build from [{commit_sha}](https://github.com/LiveContainer/LiveContainer/commit/{commit_sha}):\
+LiveContainerUp build from [{commit_sha}](https://github.com/SpencerGraffunder/LiveContainerUp/commit/{commit_sha}):\
  {commit_msg}
     """
     assets = latest_release.get("assets", [])
@@ -341,9 +341,15 @@ Nightly build from [{commit_sha}](https://github.com/LiveContainer/LiveContainer
     else:
         channels = app['releaseChannels']
         for channel in channels:
-            if channel['track'] != 'nightly':
-                continue
+            # Our build must win regardless of which track the client selected
             channel['releases'] = [version_entry]
+        app.update({
+            "version": version,
+            "versionDate": version_date,
+            "versionDescription": description,
+            "downloadURL": download_url,
+            "size": size
+        })
     try:
         with open(json_file, "w") as file:
             json.dump(data, file, indent=2)
